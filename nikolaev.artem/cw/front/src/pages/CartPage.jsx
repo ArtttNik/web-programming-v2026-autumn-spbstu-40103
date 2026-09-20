@@ -15,7 +15,7 @@ import {formatPrice, pluralize} from '../utils/format'
 import './CartPage.css'
 
 export default function CartPage() {
-  const {items, setQuantity, removeItems, clear} = useCart()
+  const {items, setQuantity, removeItems} = useCart()
 
   const [activeTab, setActiveTab] = useState('cart')
   const [checkedIds, setCheckedIds] = useState(() => new Set(items.map((i) => i.goodId)))
