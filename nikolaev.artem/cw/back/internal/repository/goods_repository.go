@@ -71,17 +71,24 @@ func (r *GoodsRepository) List(ctx context.Context, f GoodsFilter) (*GoodsPage, 
 		argN++
 	}
 
-	orderBy := "is_new DESC, created_at DESC"
+	// id в конце — стабильный порядок при равных значениях, иначе пагинация может дублировать/терять товары.
+	orderBy := "is_new DESC, created_at DESC, id"
 
 	switch f.Sort {
 	case "price_asc":
-		orderBy = "price ASC"
+		orderBy = "price ASC, id"
 	case "price_desc":
-		orderBy = "price DESC"
+		orderBy = "price DESC, id"
 	case "rating_desc":
-		orderBy = "rating DESC"
+		orderBy = "rating DESC, id"
 	case "new":
-		orderBy = "is_new DESC, created_at DESC"
+		orderBy = "is_new DESC, created_at DESC, id"
+	case "new_asc":
+		orderBy = "is_new ASC, created_at ASC, id"
+	case "popular":
+		orderBy = "is_hit DESC, hit_rank ASC, rating DESC, id"
+	case "popular_asc":
+		orderBy = "is_hit ASC, hit_rank DESC, rating ASC, id"
 	}
 
 	whereClause := strings.Join(where, " AND ")
@@ -99,6 +106,8 @@ func (r *GoodsRepository) List(ctx context.Context, f GoodsFilter) (*GoodsPage, 
 	if pageSize < 1 {
 		pageSize = 9
 	}
+
+	pageSize = min(pageSize, 100)
 
 	offset := (page - 1) * pageSize
 

@@ -1,26 +1,26 @@
-import {ChevronIcon} from './Icons'
-import './Pagination.css'
+import {ChevronIcon} from './Icons';
+import './Pagination.css';
 
 function buildPages(current, total) {
-  if (total <= 4) {
-    return Array.from({length: total}, (_, i) => i + 1)
+  if (total <= 3) {
+    return Array.from({length: total}, (_, i) => i + 1);
   }
   if (current <= 3) {
-    return [1, 2, 3, '...', total]
+    return [1, 2, 3, '...', total];
   }
   if (current >= total - 1) {
-    return [1, '...', total - 2, total - 1, total]
+    return [1, '...', total - 2, total - 1, total];
   }
   return [1, '...', current - 1, current, current + 1, '...', total].filter(
     (p, i, a) => !(p === '...' && a[i - 1] === '...'),
-  )
+  );
 }
 
 export default function Pagination({page, totalPages, onChange}) {
   if (totalPages <= 1) {
-    return null
+    return null;
   }
-  const pages = buildPages(page, totalPages)
+  const pages = buildPages(page, totalPages);
 
   return (
     <nav className="pagination" aria-label="Пагинация">
@@ -62,5 +62,5 @@ export default function Pagination({page, totalPages, onChange}) {
         </button>
       )}
     </nav>
-  )
+  );
 }

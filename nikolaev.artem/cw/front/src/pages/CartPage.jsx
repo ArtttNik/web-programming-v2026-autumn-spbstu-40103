@@ -15,80 +15,92 @@ import {formatPrice, pluralize} from '../utils/format'
 import './CartPage.css'
 
 export default function CartPage() {
-  const {items, setQuantity, removeItems} = useCart()
+  const {items, setQuantity, removeItems} = useCart();
 
-  const [activeTab, setActiveTab] = useState('cart')
-  const [checkedIds, setCheckedIds] = useState(() => new Set(items.map((i) => i.goodId)))
-  const [pendingDeleteIds, setPendingDeleteIds] = useState(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [serverFieldErrors, setServerFieldErrors] = useState({})
-  const [orderResult, setOrderResult] = useState(null)
-  const [submitError, setSubmitError] = useState('')
+  const [activeTab, setActiveTab] = useState('cart');
+  const [checkedIds, setCheckedIds] = useState(
+    () => new Set(items.map((i) => i.goodId)),
+  );
+  const [pendingDeleteIds, setPendingDeleteIds] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverFieldErrors, setServerFieldErrors] = useState({});
+  const [orderResult, setOrderResult] = useState(null);
+  const [submitError, setSubmitError] = useState('');
 
-  const [orders, setOrders] = useState([])
-  const [ordersLoaded, setOrdersLoaded] = useState(false)
+  const [orders, setOrders] = useState([]);
+  const [ordersLoaded, setOrdersLoaded] = useState(false);
 
   useEffect(() => {
     setCheckedIds((prev) => {
-      const validIds = new Set(items.map((i) => i.goodId))
-      const next = new Set([...prev].filter((id) => validIds.has(id)))
+      const validIds = new Set(items.map((i) => i.goodId));
+      const next = new Set([...prev].filter((id) => validIds.has(id)));
       items.forEach((i) => {
         if (!prev.has(i.goodId)) {
-          next.add(i.goodId)
+          next.add(i.goodId);
         }
-      })
-      return next
-    })
-  }, [items])
+      });
+      return next;
+    });
+  }, [items]);
 
   useEffect(() => {
     if (activeTab !== 'history' || ordersLoaded) {
-      return
+      return;
     }
     api
       .getOrders()
       .then((data) => setOrders(data.items || []))
       .catch(() => setOrders([]))
-      .finally(() => setOrdersLoaded(true))
-  }, [activeTab, ordersLoaded])
+      .finally(() => setOrdersLoaded(true));
+  }, [activeTab, ordersLoaded]);
 
-  const allChecked = items.length > 0 && items.every((i) => checkedIds.has(i.goodId))
+  const allChecked =
+    items.length > 0 && items.every((i) => checkedIds.has(i.goodId));
 
   const toggleAll = () => {
     if (allChecked) {
-      setCheckedIds(new Set())
+      setCheckedIds(new Set());
     } else {
-      setCheckedIds(new Set(items.map((i) => i.goodId)))
+      setCheckedIds(new Set(items.map((i) => i.goodId)));
     }
-  }
+  };
 
   const toggleOne = (goodId) => {
     setCheckedIds((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (next.has(goodId)) {
-        next.delete(goodId)
+        next.delete(goodId);
       } else {
-        next.add(goodId)
+        next.add(goodId);
       }
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
-  const checkedItems = items.filter((i) => checkedIds.has(i.goodId))
-  const checkedCount = checkedItems.reduce((sum, i) => sum + i.quantity, 0)
-  const checkedTotal = checkedItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
+  const checkedItems = items.filter((i) => checkedIds.has(i.goodId));
+  const checkedCount = checkedItems.reduce((sum, i) => sum + i.quantity, 0);
+  const checkedTotal = checkedItems.reduce(
+    (sum, i) => sum + i.price * i.quantity,
+    0,
+  );
 
-  const confirmDelete = (ids) => setPendingDeleteIds(ids)
+  const confirmDelete = (ids) => setPendingDeleteIds(ids);
 
   const handleConfirmDelete = () => {
-    removeItems(pendingDeleteIds)
-    setPendingDeleteIds(null)
-  }
+    removeItems(pendingDeleteIds);
+    setPendingDeleteIds(null);
+  };
 
   const handleCheckout = async (formValues) => {
-    setSubmitError('')
-    setServerFieldErrors({})
-    setIsSubmitting(true)
+    setSubmitError('');
+    setServerFieldErrors({});
+
+    if (checkedItems.length === 0) {
+      setSubmitError('Выберите товары для оформления заказа');
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const payload = {
@@ -97,25 +109,27 @@ export default function CartPage() {
           goodId: i.goodId,
           quantity: i.quantity,
         })),
-      }
-      const order = await api.createOrder(payload)
-      removeItems(checkedItems.map((i) => i.goodId))
-      setOrderResult(order)
-      setOrdersLoaded(false)
+      };
+      const order = await api.createOrder(payload);
+      removeItems(checkedItems.map((i) => i.goodId));
+      setOrderResult(order);
+      setOrdersLoaded(false);
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
         if (err.body?.fields) {
-          setServerFieldErrors(err.body.fields)
+          setServerFieldErrors(err.body.fields);
         } else {
-          setSubmitError(err.body?.message || 'Проверьте правильность заполнения полей')
+          setSubmitError(
+            err.body?.message || 'Проверьте правильность заполнения полей',
+          );
         }
       } else {
-        setSubmitError('Не удалось оформить заказ. Попробуйте ещё раз.')
+        setSubmitError('Не удалось оформить заказ. Попробуйте ещё раз.');
       }
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="cart-page">
@@ -153,7 +167,8 @@ export default function CartPage() {
               <img className="cart-empty__icon" src={emptyCart} alt="" />
               <h2 className="cart-empty__title">Пока пусто</h2>
               <p className="cart-empty__text">
-                Ознакомьтесь с новинками и хитами на главной или найдите нужное в каталоге
+                Ознакомьтесь с новинками и хитами на главной или найдите нужное
+                в каталоге
               </p>
               <div className="cart-empty__actions">
                 <Link to="/catalog" className="btn btn--primary">
@@ -175,7 +190,9 @@ export default function CartPage() {
                     <button
                       type="button"
                       className="cart-list__delete-all"
-                      onClick={() => confirmDelete(checkedItems.map((i) => i.goodId))}
+                      onClick={() =>
+                        confirmDelete(checkedItems.map((i) => i.goodId))
+                      }
                     >
                       <CrossIcon />
                       Удалить все
@@ -195,22 +212,23 @@ export default function CartPage() {
                 ))}
 
                 <div className="cart-list__summary">
-                  {checkedCount} {pluralize(checkedCount, ['товар', 'товара', 'товаров'])} на{' '}
+                  {checkedCount}{' '}
+                  {pluralize(checkedCount, ['товар', 'товара', 'товаров'])} на{' '}
                   {formatPrice(checkedTotal)} ₽
                 </div>
               </div>
 
-              {checkedItems.length > 0 && (
-                <div className="cart-checkout">
-                  <h2 className="cart-checkout__title">Оформление заказа</h2>
-                  {submitError && <div className="cart-checkout__error">{submitError}</div>}
-                  <CheckoutForm
-                    onSubmit={handleCheckout}
-                    isSubmitting={isSubmitting}
-                    serverFieldErrors={serverFieldErrors}
-                  />
-                </div>
-              )}
+              <div className="cart-checkout">
+                <h2 className="cart-checkout__title">Оформление заказа</h2>
+                {submitError && (
+                  <div className="cart-checkout__error">{submitError}</div>
+                )}
+                <CheckoutForm
+                  onSubmit={handleCheckout}
+                  isSubmitting={isSubmitting}
+                  serverFieldErrors={serverFieldErrors}
+                />
+              </div>
             </>
           )}
         </>
@@ -221,7 +239,8 @@ export default function CartPage() {
           message={
             pendingDeleteIds.length === 1
               ? `Вы действительно хотите удалить ${
-                  items.find((i) => i.goodId === pendingDeleteIds[0])?.title ?? 'товар'
+                  items.find((i) => i.goodId === pendingDeleteIds[0])?.title ??
+                  'товар'
                 }`
               : `Вы действительно хотите удалить выбранные товары (${pendingDeleteIds.length})`
           }
@@ -231,11 +250,18 @@ export default function CartPage() {
       )}
 
       {orderResult && (
-        <MessageDialog icon={smile} title="Спасибо за заказ!" onClose={() => setOrderResult(null)}>
+        <MessageDialog
+          icon={smile}
+          title="Спасибо, ваш заказ успешно оформлен"
+          onClose={() => setOrderResult(null)}
+        >
           <p>Номер заказа {orderResult.orderNumber}.</p>
-          <p>Мы свяжемся с вами в течение 10 минут, чтобы уточнить удобное для вас время доставки</p>
+          <p>
+            Мы свяжемся с вами в течение 10 минут, чтобы уточнить удобное для
+            вас время доставки
+          </p>
         </MessageDialog>
       )}
     </div>
-  )
+  );
 }

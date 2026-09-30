@@ -1,8 +1,12 @@
-import {useState} from 'react'
-import {PAYMENT_OPTIONS} from '../utils/constants'
-import {formatPhoneInput, isCompletePhone, isValidEmail} from '../utils/validation'
-import {Checkbox, Radio} from './Checkbox'
-import './CheckoutForm.css'
+import {useState} from 'react';
+import {PAYMENT_OPTIONS} from '../utils/constants';
+import {
+  formatPhoneInput,
+  isCompletePhone,
+  isValidEmail,
+} from '../utils/validation';
+import {Checkbox, Radio} from './Checkbox';
+import './CheckoutForm.css';
 
 const EMPTY_FORM = {
   phone: '',
@@ -11,52 +15,60 @@ const EMPTY_FORM = {
   address: '',
   paymentType: '',
   needPackage: true,
-}
-const REQUIRED = 'Заполните обязательное поле'
+};
+const REQUIRED = 'Заполните обязательное поле';
 
-export default function CheckoutForm({onSubmit, isSubmitting, serverFieldErrors = {}}) {
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [errors, setErrors] = useState({})
+export default function CheckoutForm({
+  onSubmit,
+  isSubmitting,
+  serverFieldErrors = {},
+}) {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState({});
 
   const setField = (name, value) => {
-    setForm((prev) => ({...prev, [name]: value}))
-    setErrors((prev) => ({...prev, [name]: undefined}))
-  }
+    setForm((prev) => ({...prev, [name]: value}));
+    setErrors((prev) => ({...prev, [name]: undefined}));
+  };
 
   const validate = () => {
-    const next = {}
+    const next = {};
     if (!form.phone.trim()) {
-      next.phone = REQUIRED
+      next.phone = REQUIRED;
     } else if (!isCompletePhone(form.phone)) {
-      next.phone = 'Введите номер телефона полностью'
+      next.phone = 'Введите номер телефона полностью';
     }
     if (form.email.trim() && !isValidEmail(form.email)) {
-      next.email = 'Введите корректный e-mail'
+      next.email = 'Введите корректный e-mail';
     }
     if (form.deliveryType === 'delivery' && !form.address.trim()) {
-      next.address = REQUIRED
+      next.address = REQUIRED;
     }
-    setErrors(next)
-    return Object.keys(next).length === 0
-  }
+    if (!form.paymentType) {
+      next.paymentType = 'Выберите способ оплаты';
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!validate()) {
-      return
+      return;
     }
     onSubmit({
       phone: form.phone.trim(),
       email: form.email.trim() || undefined,
       deliveryType: form.deliveryType,
-      address: form.deliveryType === 'delivery' ? form.address.trim() : undefined,
+      address:
+        form.deliveryType === 'delivery' ? form.address.trim() : undefined,
       paymentType: form.paymentType || undefined,
       needPackage: form.needPackage,
-    })
-  }
+    });
+  };
 
-  const err = {...serverFieldErrors, ...errors}
-  const cls = (name) => `field ${err[name] ? 'field--error' : ''}`
+  const err = {...serverFieldErrors, ...errors};
+  const cls = (name) => `field ${err[name] ? 'field--error' : ''}`;
 
   return (
     <form className="checkout-form" onSubmit={handleSubmit} noValidate>
@@ -71,7 +83,9 @@ export default function CheckoutForm({onSubmit, isSubmitting, serverFieldErrors 
             type="tel"
             inputMode="numeric"
             value={form.phone}
-            onChange={(e) => setField('phone', formatPhoneInput(e.target.value, form.phone))}
+            onChange={(e) =>
+              setField('phone', formatPhoneInput(e.target.value, form.phone))
+            }
             placeholder="+7 (___) ___-__-__"
             maxLength={18}
           />
@@ -144,17 +158,27 @@ export default function CheckoutForm({onSubmit, isSubmitting, serverFieldErrors 
             </option>
           ))}
         </select>
+        {err.paymentType && (
+          <span className="field__error">{err.paymentType}</span>
+        )}
       </div>
 
-      <Checkbox checked={form.needPackage} onChange={(e) => setField('needPackage', e.target.checked)}>
+      <Checkbox
+        checked={form.needPackage}
+        onChange={(e) => setField('needPackage', e.target.checked)}
+      >
         Нужна упаковка
       </Checkbox>
 
       <div>
-        <button type="submit" className="btn btn--primary" disabled={isSubmitting}>
+        <button
+          type="submit"
+          className="btn btn--primary"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Оформляем...' : 'Оформить заказ'}
         </button>
       </div>
     </form>
-  )
+  );
 }
