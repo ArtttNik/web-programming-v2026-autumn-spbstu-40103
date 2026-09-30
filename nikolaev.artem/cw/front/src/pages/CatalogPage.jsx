@@ -8,6 +8,8 @@ import Pagination from '../components/Pagination'
 import {DEFAULT_PAGE_SIZE} from '../utils/constants'
 import './CatalogPage.css'
 
+const STORAGE_KEY = 'gadgethub_catalog_state'
+
 const INITIAL_FILTERS = {
   minPrice: undefined,
   maxPrice: undefined,
@@ -15,10 +17,21 @@ const INITIAL_FILTERS = {
   color: [],
 }
 
+function loadSaved() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : null
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
 export default function CatalogPage() {
-  const [filters, setFilters] = useState(INITIAL_FILTERS)
-  const [sort, setSort] = useState('new')
-  const [page, setPage] = useState(1)
+  const [saved] = useState(loadSaved)
+  const [filters, setFilters] = useState({...INITIAL_FILTERS, ...saved.filters})
+  const [sort, setSort] = useState(saved.sort || 'new')
+  const [page, setPage] = useState(saved.page || 1)
 
   const [goods, setGoods] = useState([])
   const [totalPages, setTotalPages] = useState(1)
@@ -26,6 +39,12 @@ export default function CatalogPage() {
   const [error, setError] = useState(null)
   const [selectedGood, setSelectedGood] = useState(null)
   const [priceBounds, setPriceBounds] = useState(null)
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({filters, sort, page}))
+    } catch { /* empty */ }
+  }, [filters, sort, page])
 
   useEffect(() => {
     let cancelled = false
